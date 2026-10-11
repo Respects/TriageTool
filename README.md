@@ -2,7 +2,7 @@
 
 An AI-assisted triage system for payment dispute cases. It takes incoming disputes, uses a large language model to summarise and prioritise each one, surfaces the urgent cases to human analysts, and presents everything in a reviewable queue.
 
-> **The core idea:** the tool never decides a dispute. It does the assembly, reading, summarising, prioritising, and extracting the facts. The judgement is left to a human in the loop. A case the system can't confidently process is flagged for manual review rather than silently dropped.
+> **The core idea:** the tool never decides a dispute. It does the assembly, reading, summarising, prioritising, and extraction of the facts. The judgement is left to a human in the loop. A case the system can't confidently process is flagged for manual review rather than silently dropped.
 
 ---
 
