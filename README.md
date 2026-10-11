@@ -114,7 +114,7 @@ TriageTool/
 │   ├── styles.py          # Injected CSS
 │   └── .streamlit/        # Streamlit theme config
 ├── n8n/
-│   └── <workflow>.json    # The n8n workflow (import into your own n8n)
+│   └── triage_workflow.json    # The n8n workflow (import into your own n8n)
 ├── .env.example           # Template for your environment variables
 └── requirements.txt       # Python dependencies
 ```
@@ -186,7 +186,7 @@ Then open [http://localhost:5678](http://localhost:5678), create a local owner a
 
 ### 6. Import and configure the n8n workflow
 
-1. In n8n, create a new workflow, then use the **⋯ menu → Import from File** and select `n8n/<workflow>.json`.
+1. In n8n, create a new workflow, then use the **⋯ menu → Import from File** and select `n8n/triage_workflow.json`.
 2. The workflow will import, but **two things need your own configuration** (see the sections below):
    - the **Gmail credential** on the two email nodes,
    - the **recipient email address** (`sendTo`) on the email nodes. Add your own address.
@@ -210,9 +210,8 @@ n8n needs permission to send email through your Gmail account, which uses Google
 3. Fill in the required fields (app name, your email). You can **leave the "authorized domains" field blank** — a domain is not required for local use.
 4. On the **Test users** step, **add your own Gmail address** as a test user.
 
-> **Blocker to know about:** while the app is in **"Testing"** status, Google issues refresh tokens that **expire after 7 days**. This means the Gmail credential in n8n will stop working after a week and show "credential needs to be reconnected." You have two options:
+> **Blocker to know about:** while the app is in **"Testing"** status, Google issues refresh tokens that **expire after 7 days**. This means the Gmail credential in n8n will stop working after a week and show "credential needs to be reconnected."
 > - **Quick fix:** reconnect the credential in n8n when it lapses (open the Gmail node → credential → reconnect).
-> - **Permanent fix:** in the OAuth consent screen, change the publishing status from **"Testing"** to **"In production."** For a personal app using only the Gmail send scope, you can proceed through this without full verification, and refresh tokens stop expiring. This would require having a domain and is otherwise not recommended as this tool is just for demo purposes.
 
 ### Step 3 — Create OAuth credentials
 
