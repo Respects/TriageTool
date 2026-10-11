@@ -1,0 +1,345 @@
+{
+  "name": "Triage Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/triage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        -32
+      ],
+      "id": "e457d9f4-be4c-4027-8335-47d9dc1a0127",
+      "name": "Triage",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/log",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "case_id",
+              "value": "={{ $json.case_id }}"
+            },
+            {
+              "name": "resulting_priority",
+              "value": "={{ $json.priority }}"
+            },
+            {
+              "name": "outcome",
+              "value": "Success"
+            },
+            {
+              "name": "source",
+              "value": "n8n-webhook"
+            },
+            {
+              "name": "processing_duration",
+              "value": "={{ $json.processing_duration }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        -128
+      ],
+      "id": "83a16c14-525f-49a5-845a-65d214a802c3",
+      "name": "Log success"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/log",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "case_id",
+              "value": "={{ $json.details.body.detail.case_id }}"
+            },
+            {
+              "name": "outcome",
+              "value": "NeedsReview"
+            },
+            {
+              "name": "source",
+              "value": "n8n-webhook"
+            },
+            {
+              "name": "processing_duration",
+              "value": "={{ $json.details.body.detail.processing_duration }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        64
+      ],
+      "id": "fca60745-ceac-4085-adba-fcee45f65ccf",
+      "name": "Log failure"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "964c2e1a-d01e-4c9c-a27f-70553ef9931f",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -32
+      ],
+      "id": "b70fd002-4b65-44c6-b3ca-2bd8c4a6d878",
+      "name": "Webhook",
+      "webhookId": "964c2e1a-d01e-4c9c-a27f-70553ef9931f"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Failed to triage case"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        64
+      ],
+      "id": "d358bcd5-60a2-472c-9d22-7e01bd86b14b",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "50432dd6-ff0e-4073-8c6e-8a2fc2484f77",
+              "leftValue": "={{ $json.priority }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        -32
+      ],
+      "id": "d8e1b687-1859-4248-a63b-d33ea2238068",
+      "name": "If success"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7e7492cd-ddb0-4878-b0f5-21d4df304910",
+              "leftValue": "={{ $('Triage').item.json.priority }}",
+              "rightValue": "High",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        896,
+        -128
+      ],
+      "id": "2dcc701e-bee5-4637-96db-7e973bd095f3",
+      "name": "Is high"
+    },
+    {
+      "parameters": {
+        "sendTo": "",
+        "subject": "=⚠ Dispute {{ $('Webhook').item.json.body.case_id }} needs MANUAL REVIEW — triage failed",
+        "emailType": "text",
+        "message": "=This case could not be automatically triaged and requires manual handling. Case:{{ $('Webhook').item.json.body.case_id }}\n\nDate received: {{ $('Webhook').item.json.body.date_received }}\nResponse_deadline: {{ $('Webhook').item.json.body.response_deadline }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        64
+      ],
+      "id": "52711d9a-90df-4e12-9b5b-0097394241ed",
+      "name": "Send needs review email",
+      "webhookId": "6f5f4885-e18e-4c8b-b7f3-be4a4d150fed",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "E15eQs3G6HNLMQ9W",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "",
+        "subject": "=⚠ High priority dispute {{ $('Triage').item.json.case_id }} needs attention ",
+        "emailType": "text",
+        "message": "=A high-priority dispute has been triaged and needs attention.\n\nCase: {{ $('Triage').item.json.case_id }}   \nPriority: {{ $('Triage').item.json.priority }}    \n\nSummary:   {{ $('Triage').item.json.case_summary }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        -128
+      ],
+      "id": "71650f74-aaaf-49d5-9ebb-abf05ddde709",
+      "name": "Send high priority email",
+      "webhookId": "0b61b775-00e8-4403-a472-c264f343a641",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "E15eQs3G6HNLMQ9W",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Triage": {
+      "main": [
+        [
+          {
+            "node": "If success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log success": {
+      "main": [
+        [
+          {
+            "node": "Is high",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Triage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log failure": {
+      "main": [
+        [
+          {
+            "node": "Send needs review email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If success": {
+      "main": [
+        [
+          {
+            "node": "Log success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is high": {
+      "main": [
+        [
+          {
+            "node": "Send high priority email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send needs review email": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "bb374007-62d1-47ac-a460-dbbea88e2de8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9bbc61febbb752885a10653ab76b7764063099250396fde89cf4dba4bcb46a1b"
+  },
+  "nodeGroups": [],
+  "id": "EibwNBbS95Av0I8H",
+  "tags": []
+}
